@@ -1,0 +1,443 @@
+@import "@fontsource-variable/manrope";
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  font-family:
+    "Manrope Variable",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+
+  color-scheme: dark;
+
+  --radius: 1rem;
+
+  --background: #070712;
+  --foreground: #f8fafc;
+
+  --card: #111225;
+  --card-foreground: #f8fafc;
+
+  --popover: #111225;
+  --popover-foreground: #f8fafc;
+
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+
+  --secondary: #17182c;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #181a2d;
+  --muted-foreground: #aeb9cc;
+
+  --accent: #22d3ee;
+  --accent-foreground: #061116;
+
+  --destructive: #fb7185;
+
+  --border: rgba(148, 163, 184, 0.14);
+  --input: #181a2d;
+  --ring: #8b5cf6;
+}
+
+@theme inline {
+  --font-sans:
+    "Manrope Variable",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: calc(var(--radius) - 2px);
+  --radius-xl: var(--radius);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    background: #070712;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    color: #f8fafc;
+
+    background:
+      radial-gradient(
+        circle at 5% -10%,
+        rgba(147, 51, 234, 0.16),
+        transparent 34rem
+      ),
+      radial-gradient(
+        circle at 95% 0%,
+        rgba(14, 165, 233, 0.12),
+        transparent 36rem
+      ),
+      #070712;
+
+    @apply antialiased;
+  }
+
+  button,
+  input,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: rgba(139, 92, 246, 0.4);
+    color: white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(167, 139, 250, 0.24);
+  }
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* =========================================================
+   APP
+   ========================================================= */
+
+.qp-app {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(
+      circle at 14% 2%,
+      rgba(168, 85, 247, 0.085),
+      transparent 30rem
+    ),
+    radial-gradient(
+      circle at 84% 0%,
+      rgba(34, 211, 238, 0.065),
+      transparent 30rem
+    ),
+    linear-gradient(
+      135deg,
+      #090617 0%,
+      #070712 52%,
+      #071220 100%
+    );
+}
+
+.qp-app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+
+  background-image:
+    linear-gradient(
+      rgba(148, 163, 184, 0.022) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(148, 163, 184, 0.022) 1px,
+      transparent 1px
+    );
+
+  background-size: 52px 52px;
+
+  mask-image:
+    linear-gradient(
+      to bottom,
+      black,
+      transparent 90%
+    );
+}
+
+/* =========================================================
+   SURFACES
+   ========================================================= */
+
+.qp-surface {
+  position: relative;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 20, 40, 0.96),
+      rgba(10, 13, 27, 0.94)
+    );
+
+  border: 1px solid rgba(148, 163, 184, 0.115);
+
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+
+  backdrop-filter: blur(22px);
+}
+
+.qp-surface-purple {
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      rgba(168, 85, 247, 0.11),
+      transparent 26rem
+    ),
+    linear-gradient(
+      140deg,
+      rgba(29, 24, 66, 0.97),
+      rgba(12, 18, 40, 0.95)
+    );
+
+  border: 1px solid rgba(167, 139, 250, 0.2);
+
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.qp-surface-blue {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(34, 211, 238, 0.08),
+      transparent 25rem
+    ),
+    linear-gradient(
+      145deg,
+      rgba(13, 26, 53, 0.97),
+      rgba(10, 15, 34, 0.95)
+    );
+
+  border: 1px solid rgba(34, 211, 238, 0.16);
+
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+/* =========================================================
+   INTERACTION
+   ========================================================= */
+
+.qp-hover {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.qp-hover:hover {
+  transform: translateY(-3px);
+
+  border-color: rgba(167, 139, 250, 0.28);
+
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.3),
+    0 0 22px rgba(139, 92, 246, 0.06);
+}
+
+/* =========================================================
+   TEXT
+   ========================================================= */
+
+.qp-gradient-text {
+  background:
+    linear-gradient(
+      90deg,
+      #ffffff 0%,
+      #eee7ff 48%,
+      #a5f3fc 100%
+    );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.qp-purple-text {
+  background:
+    linear-gradient(
+      90deg,
+      #f0abfc,
+      #c4b5fd,
+      #67e8f9
+    );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* =========================================================
+   LIVE
+   ========================================================= */
+
+.qp-live-dot {
+  animation: qp-pulse 1.8s ease-out infinite;
+}
+
+@keyframes qp-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(52, 211, 153, 0.4),
+      0 0 12px rgba(52, 211, 153, 0.35);
+  }
+
+  70% {
+    box-shadow:
+      0 0 0 8px rgba(52, 211, 153, 0),
+      0 0 16px rgba(52, 211, 153, 0.18);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(52, 211, 153, 0);
+  }
+}
+
+/* =========================================================
+   GLOW
+   ========================================================= */
+
+.qp-purple-glow {
+  box-shadow:
+    0 0 28px rgba(139, 92, 246, 0.2),
+    0 12px 38px rgba(76, 29, 149, 0.2);
+}
+
+.qp-cyan-glow {
+  box-shadow:
+    0 0 28px rgba(34, 211, 238, 0.1);
+}
+
+/* =========================================================
+   QUEUE RAIL
+   ========================================================= */
+
+.qp-rail {
+  position: relative;
+}
+
+.qp-rail-line {
+  height: 3px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #22d3ee 0%,
+      #8b5cf6 45%,
+      #d946ef 72%,
+      rgba(255, 255, 255, 0.12) 100%
+    );
+
+  box-shadow:
+    0 0 22px rgba(139, 92, 246, 0.2);
+}
+
+/* =========================================================
+   CONFIDENCE
+   ========================================================= */
+
+.qp-confidence {
+  background:
+    conic-gradient(
+      #22d3ee 0deg,
+      #8b5cf6 308deg,
+      rgba(255, 255, 255, 0.08) 308deg
+    );
+}
+
+/* =========================================================
+   STAT BACKGROUNDS
+   ========================================================= */
+
+.qp-stat-purple {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(168, 85, 247, 0.09),
+      rgba(139, 92, 246, 0.025)
+    );
+}
+
+.qp-stat-cyan {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(34, 211, 238, 0.085),
+      rgba(59, 130, 246, 0.025)
+    );
+}
+
+.qp-stat-rose {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(244, 63, 94, 0.08),
+      rgba(139, 92, 246, 0.02)
+    );
+}
+
+.qp-stat-green {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.08),
+      rgba(34, 211, 238, 0.025)
+    );
+}
