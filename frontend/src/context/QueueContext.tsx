@@ -30,6 +30,7 @@ import {
     etaMax: number
     note: string
     isPriority: boolean
+    phoneMasked?: string
   }
   
   export type QueueEvent = {
@@ -44,9 +45,24 @@ import {
       | "doctor"
   }
   
+  export type SmsMessage = {
+    id: string
+    direction:
+      | "INBOUND"
+      | "OUTBOUND"
+    token?: string
+    recipient: string
+    message: string
+    time: string
+    status:
+      | "RECEIVED"
+      | "SENT"
+  }
+  
   type QueueContextType = {
     queue: QueuePatient[]
     events: QueueEvent[]
+    smsMessages: SmsMessage[]
   
     priorityInserted: boolean
     forecastVersion: number
@@ -62,6 +78,14 @@ import {
   
     pauseDoctor: () => void
     resumeDoctor: () => void
+  
+    sendSmsForToken: (
+      token: string,
+    ) => string
+  
+    simulateSmsQuery: (
+      input: string,
+    ) => string
   }
   
   const originalQueue: QueuePatient[] = [
@@ -75,6 +99,8 @@ import {
       etaMax: 0,
       note: "Consultation in progress",
       isPriority: false,
+      phoneMasked:
+        "+91 98••• 3101",
     },
   
     {
@@ -87,6 +113,8 @@ import {
       etaMax: 12,
       note: "Patient checked in",
       isPriority: false,
+      phoneMasked:
+        "+91 98••• 3202",
     },
   
     {
@@ -99,6 +127,8 @@ import {
       etaMax: 25,
       note: "Waiting for consultation",
       isPriority: false,
+      phoneMasked:
+        "+91 98••• 3303",
     },
   
     {
@@ -111,6 +141,8 @@ import {
       etaMax: 34,
       note: "Waiting for consultation",
       isPriority: false,
+      phoneMasked:
+        "+91 98••• 3404",
     },
   
     {
@@ -123,13 +155,16 @@ import {
       etaMax: 55,
       note: "Remote patient",
       isPriority: false,
+      phoneMasked:
+        "+91 98••• 4210",
     },
   ]
   
   const initialEvents: QueueEvent[] = [
     {
       id: "initial-system",
-      title: "Forecast engine active",
+      title:
+        "Forecast engine active",
       description:
         "QueuePulse is monitoring the General Medicine OPD.",
       time: "Live",
@@ -142,6 +177,47 @@ import {
       null,
     )
   
+  const DEMO_START_MINUTES =
+    11 * 60
+  
+  function roundFive(
+    value: number,
+  ) {
+    return (
+      Math.round(value / 5) * 5
+    )
+  }
+  
+  function formatClock(
+    queueMinutes: number,
+  ) {
+    const total =
+      DEMO_START_MINUTES +
+      roundFive(queueMinutes)
+  
+    const hours24 =
+      Math.floor(total / 60) %
+      24
+  
+    const minutes =
+      total % 60
+  
+    const period =
+      hours24 >= 12
+        ? "PM"
+        : "AM"
+  
+    const hours12 =
+      hours24 % 12 || 12
+  
+    return `${hours12}:${minutes
+      .toString()
+      .padStart(
+        2,
+        "0",
+      )} ${period}`
+  }
+  
   function currentTime() {
     return new Date().toLocaleTimeString(
       [],
@@ -152,10 +228,21 @@ import {
     )
   }
   
-  function createEventId(
+  function createId(
     prefix: string,
   ) {
     return `${prefix}-${Date.now()}-${Math.random()}`
+  }
+  
+  function normalizeToken(
+    value: string,
+  ) {
+    return value
+      .toUpperCase()
+      .replace(
+        /[^A-Z0-9]/g,
+        "",
+      )
   }
   
   export function QueueProvider({
@@ -178,14 +265,24 @@ import {
       )
   
     const [
+      smsMessages,
+      setSmsMessages,
+    ] =
+      useState<SmsMessage[]>(
+        [],
+      )
+  
+    const [
       priorityInserted,
       setPriorityInserted,
-    ] = useState(false)
+    ] =
+      useState(false)
   
     const [
       forecastVersion,
       setForecastVersion,
-    ] = useState(1)
+    ] =
+      useState(1)
   
     const [
       doctorStatus,
@@ -205,7 +302,7 @@ import {
         (currentEvents) => [
           {
             ...event,
-            id: createEventId(
+            id: createId(
               event.type,
             ),
             time: currentTime(),
@@ -215,10 +312,203 @@ import {
       )
     }
   
+    function addSms(
+      message: Omit<
+        SmsMessage,
+        "id" | "time"
+      >,
+    ) {
+      setSmsMessages(
+        (current) => [
+          {
+            ...message,
+            id: createId("sms"),
+            time: currentTime(),
+          },
+          ...current,
+        ],
+      )
+    }
+  
+    function buildPatientSms(
+      patient: QueuePatient,
+    ) {
+      const nowServing =
+        queue.find(
+          (item) =>
+            item.status ===
+            "SERVING",
+        )
+  
+      if (
+        patient.status ===
+        "SERVING"
+      ) {
+        return `QueuePulse: Token ${patient.token} is now being served in Room 201.`
+      }
+  
+      if (
+        patient.status ===
+        "COMPLETED"
+      ) {
+        return `QueuePulse: Token ${patient.token} has completed consultation.`
+      }
+  
+      if (
+        patient.status ===
+        "MISSED"
+      ) {
+        return `QueuePulse: Token ${patient.token} was marked missed. Please contact reception for assistance.`
+      }
+  
+      const eta =
+        `${formatClock(
+          patient.etaMin,
+        )}-${formatClock(
+          patient.etaMax,
+        )}`
+  
+      const arrival =
+        formatClock(
+          Math.max(
+            0,
+            patient.etaMin - 15,
+          ),
+        )
+  
+      return `QueuePulse ${patient.token}: ETA ${eta}. Arrive by ${arrival}. Now serving ${nowServing?.token ?? "N/A"}. Forecast v${forecastVersion}.`
+    }
+  
+    function sendSmsForToken(
+      token: string,
+    ) {
+      const patient =
+        queue.find(
+          (item) =>
+            normalizeToken(
+              item.token,
+            ) ===
+            normalizeToken(token),
+        )
+  
+      if (!patient) {
+        return "Token not found."
+      }
+  
+      const response =
+        buildPatientSms(patient)
+  
+      addSms({
+        direction: "OUTBOUND",
+        token:
+          patient.token,
+        recipient:
+          patient.phoneMasked ??
+          "Basic phone",
+        message: response,
+        status: "SENT",
+      })
+  
+      return response
+    }
+  
+    function simulateSmsQuery(
+      input: string,
+    ) {
+      const trimmed =
+        input.trim()
+  
+      addSms({
+        direction: "INBOUND",
+        recipient:
+          "QueuePulse SMS",
+        message: trimmed,
+        status: "RECEIVED",
+      })
+  
+      const match =
+        trimmed
+          .toUpperCase()
+          .match(
+            /^(Q|STATUS)\s+([A-Z0-9-]+)$/,
+          )
+  
+      if (!match) {
+        const help =
+          "QueuePulse: Send Q followed by your token. Example: Q G42"
+  
+        addSms({
+          direction: "OUTBOUND",
+          recipient:
+            "Basic phone",
+          message: help,
+          status: "SENT",
+        })
+  
+        return help
+      }
+  
+      const token =
+        match[2]
+  
+      const patient =
+        queue.find(
+          (item) =>
+            normalizeToken(
+              item.token,
+            ) ===
+            normalizeToken(token),
+        )
+  
+      if (!patient) {
+        const notFound =
+          `QueuePulse: Token ${token} was not found.`
+  
+        addSms({
+          direction: "OUTBOUND",
+          recipient:
+            "Basic phone",
+          message:
+            notFound,
+          status: "SENT",
+        })
+  
+        return notFound
+      }
+  
+      const response =
+        buildPatientSms(
+          patient,
+        )
+  
+      addSms({
+        direction: "OUTBOUND",
+        token:
+          patient.token,
+        recipient:
+          patient.phoneMasked ??
+          "Basic phone",
+        message:
+          response,
+        status: "SENT",
+      })
+  
+      return response
+    }
+  
     function insertPriorityCase() {
-      if (priorityInserted) {
+      if (
+        priorityInserted
+      ) {
         return
       }
+  
+      const g42Before =
+        queue.find(
+          (patient) =>
+            patient.token ===
+            "G-42",
+        )
   
       const priorityPatient: QueuePatient =
         {
@@ -226,11 +516,13 @@ import {
           token: "P1-07",
           department:
             "Priority clinical case",
-          doctor: "Dr. Meera Shah",
+          doctor:
+            "Dr. Meera Shah",
           status: "PRIORITY",
           etaMin: 1,
           etaMax: 5,
-          note: "Inserted by triage",
+          note:
+            "Inserted by triage",
           isPriority: true,
         }
   
@@ -313,7 +605,47 @@ import {
         type: "forecast",
       })
   
-      setPriorityInserted(true)
+      if (g42Before) {
+        const shiftedMin =
+          g42Before.etaMin +
+          14
+  
+        const shiftedMax =
+          g42Before.etaMax +
+          14
+  
+        const arrival =
+          Math.max(
+            0,
+            shiftedMin - 15,
+          )
+  
+        addSms({
+          direction:
+            "OUTBOUND",
+  
+          token: "G-42",
+  
+          recipient:
+            g42Before.phoneMasked ??
+            "Basic phone",
+  
+          message:
+            `QueuePulse G-42: ETA updated to ${formatClock(
+              shiftedMin,
+            )}-${formatClock(
+              shiftedMax,
+            )}. Please arrive by ${formatClock(
+              arrival,
+            )}. Reason: priority clinical case entered the queue.`,
+  
+          status: "SENT",
+        })
+      }
+  
+      setPriorityInserted(
+        true,
+      )
   
       setForecastVersion(
         (version) =>
@@ -352,17 +684,15 @@ import {
               index,
             ) => {
               if (
-                index === servingIndex
+                index ===
+                servingIndex
               ) {
                 return {
                   ...patient,
-  
                   status:
                     "COMPLETED",
-  
                   note:
                     "Consultation completed",
-  
                   etaMin: 0,
                   etaMax: 0,
                 }
@@ -380,14 +710,12 @@ import {
               ) {
                 return {
                   ...patient,
-  
                   etaMin:
                     Math.max(
                       0,
                       patient.etaMin -
                         8,
                     ),
-  
                   etaMax:
                     Math.max(
                       1,
@@ -416,10 +744,7 @@ import {
         title:
           "Consultation completed",
         description:
-          `${
-            completedToken ??
-            "Current patient"
-          } consultation was completed. The queue is ready to advance.`,
+          `${completedToken ?? "Current patient"} consultation was completed. The queue is ready to advance.`,
         type: "doctor",
       })
   
@@ -434,7 +759,8 @@ import {
   
     function callNextPatient() {
       if (
-        doctorStatus === "PAUSED"
+        doctorStatus ===
+        "PAUSED"
       ) {
         return
       }
@@ -473,10 +799,8 @@ import {
               nextPatient.id
                 ? {
                     ...patient,
-  
                     status:
                       "CALLED",
-  
                     note:
                       "Patient called to consultation room",
                   }
@@ -485,18 +809,34 @@ import {
       )
   
       addEvent({
-        title: `${
-          nextPatient.token
-        } called`,
+        title:
+          `${nextPatient.token} called`,
         description:
           "The next eligible patient was called to Room 201.",
         type: "doctor",
       })
+  
+      if (
+        nextPatient.phoneMasked
+      ) {
+        addSms({
+          direction:
+            "OUTBOUND",
+          token:
+            nextPatient.token,
+          recipient:
+            nextPatient.phoneMasked,
+          message:
+            `QueuePulse: Token ${nextPatient.token}, please proceed to Room 201. You have been called.`,
+          status: "SENT",
+        })
+      }
     }
   
     function startCalledPatient() {
       if (
-        doctorStatus === "PAUSED"
+        doctorStatus ===
+        "PAUSED"
       ) {
         return
       }
@@ -531,13 +871,10 @@ import {
               calledPatient.id
                 ? {
                     ...patient,
-  
                     status:
                       "SERVING",
-  
                     etaMin: 0,
                     etaMax: 0,
-  
                     note:
                       "Consultation in progress",
                   }
@@ -550,9 +887,8 @@ import {
       )
   
       addEvent({
-        title: `${
-          calledPatient.token
-        } consultation started`,
+        title:
+          `${calledPatient.token} consultation started`,
         description:
           "Dr. Meera Shah started the consultation.",
         type: "doctor",
@@ -596,10 +932,8 @@ import {
               ) {
                 return {
                   ...patient,
-  
                   status:
                     "MISSED",
-  
                   note:
                     "Patient did not respond when called",
                 }
@@ -615,14 +949,12 @@ import {
               ) {
                 return {
                   ...patient,
-  
                   etaMin:
                     Math.max(
                       0,
                       patient.etaMin -
                         8,
                     ),
-  
                   etaMax:
                     Math.max(
                       1,
@@ -643,20 +975,11 @@ import {
       )
   
       addEvent({
-        title: `${
-          calledPatient.token
-        } marked no-show`,
+        title:
+          `${calledPatient.token} marked no-show`,
         description:
           "The patient did not respond. QueuePulse advanced the queue and refreshed downstream ETAs.",
         type: "doctor",
-      })
-  
-      addEvent({
-        title:
-          "No-show re-forecast",
-        description:
-          "Waiting-time estimates were reduced after removing the missed patient from the active sequence.",
-        type: "forecast",
       })
     }
   
@@ -668,15 +991,20 @@ import {
             "SERVING",
         )
   
-      if (hasServing) {
-        return
-      }
-  
       if (
-        doctorStatus === "PAUSED"
+        hasServing ||
+        doctorStatus ===
+          "PAUSED"
       ) {
         return
       }
+  
+      const g42Before =
+        queue.find(
+          (patient) =>
+            patient.token ===
+            "G-42",
+        )
   
       setDoctorStatus(
         "PAUSED",
@@ -697,11 +1025,9 @@ import {
   
               return {
                 ...patient,
-  
                 etaMin:
                   patient.etaMin +
                   15,
-  
                 etaMax:
                   patient.etaMax +
                   15,
@@ -723,18 +1049,30 @@ import {
         type: "doctor",
       })
   
-      addEvent({
-        title:
-          "Pause re-forecast",
-        description:
-          "QueuePulse widened waiting estimates because the doctor became temporarily unavailable.",
-        type: "forecast",
-      })
+      if (g42Before) {
+        addSms({
+          direction:
+            "OUTBOUND",
+  
+          token:
+            "G-42",
+  
+          recipient:
+            g42Before.phoneMasked ??
+            "Basic phone",
+  
+          message:
+            "QueuePulse G-42: Your ETA changed because the doctor is temporarily unavailable. Please check your live token for the latest arrival time.",
+  
+          status: "SENT",
+        })
+      }
     }
   
     function resumeDoctor() {
       if (
-        doctorStatus !== "PAUSED"
+        doctorStatus !==
+        "PAUSED"
       ) {
         return
       }
@@ -770,6 +1108,8 @@ import {
         initialEvents,
       )
   
+      setSmsMessages([])
+  
       setPriorityInserted(
         false,
       )
@@ -786,6 +1126,7 @@ import {
         () => ({
           queue,
           events,
+          smsMessages,
   
           priorityInserted,
           forecastVersion,
@@ -801,10 +1142,14 @@ import {
   
           pauseDoctor,
           resumeDoctor,
+  
+          sendSmsForToken,
+          simulateSmsQuery,
         }),
         [
           queue,
           events,
+          smsMessages,
           priorityInserted,
           forecastVersion,
           doctorStatus,

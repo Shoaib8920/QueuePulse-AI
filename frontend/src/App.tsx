@@ -7,17 +7,35 @@ import {
 import DashboardLayout from "./layouts/DashboardLayout"
 
 import CommandCenter from "./pages/CommandCenter"
-import LiveQueue from "./pages/LiveQueue"
-import Patients from "./pages/Patients"
 import Doctors from "./pages/Doctors"
 import Forecasting from "./pages/Forecasting"
+import LiveQueue from "./pages/LiveQueue"
+import Patients from "./pages/Patients"
+import PatientToken from "./pages/PatientToken"
 
 export default function App() {
   return (
     <Routes>
 
+      {/* ========================================== */}
+      {/* PUBLIC PATIENT EXPERIENCE */}
+      {/* ========================================== */}
+
       <Route
-        element={<DashboardLayout />}
+        path="/token/:reference"
+        element={
+          <PatientToken />
+        }
+      />
+
+      {/* ========================================== */}
+      {/* STAFF DASHBOARD */}
+      {/* ========================================== */}
+
+      <Route
+        element={
+          <DashboardLayout />
+        }
       >
 
         <Route
@@ -32,30 +50,44 @@ export default function App() {
 
         <Route
           path="/command-center"
-          element={<CommandCenter />}
+          element={
+            <CommandCenter />
+          }
         />
 
         <Route
           path="/live-queue"
-          element={<LiveQueue />}
+          element={
+            <LiveQueue />
+          }
         />
 
         <Route
           path="/patients"
-          element={<Patients />}
+          element={
+            <Patients />
+          }
         />
 
         <Route
           path="/doctors"
-          element={<Doctors />}
+          element={
+            <Doctors />
+          }
         />
 
         <Route
           path="/forecasting"
-          element={<Forecasting />}
+          element={
+            <Forecasting />
+          }
         />
 
       </Route>
+
+      {/* ========================================== */}
+      {/* FALLBACK */}
+      {/* ========================================== */}
 
       <Route
         path="*"
