@@ -1,13 +1,27 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+
+from fastapi.middleware.cors import (
+    CORSMiddleware,
+)
 
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+
+from sqlalchemy.exc import (
+    SQLAlchemyError,
+)
 
 from app.api.actions import (
     router as actions_router,
+)
+
+from app.api.audit import (
+    router as audit_router,
+)
+
+from app.api.auth import (
+    router as auth_router,
 )
 
 from app.api.forecasting import (
@@ -42,6 +56,10 @@ async def lifespan(
     )
 
     print(
+        "QueuePulse authentication ready."
+    )
+
+    print(
         "QueuePulse realtime service ready."
     )
 
@@ -54,26 +72,41 @@ async def lifespan(
 
 app = FastAPI(
     title="QueuePulse AI API",
+
     description=(
         "Real-time OPD queue intelligence, "
         "forecasting and patient coordination API."
     ),
+
     version="1.0.0",
+
     lifespan=lifespan,
 )
 
 
 app.add_middleware(
     CORSMiddleware,
+
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ],
+
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+
+    allow_methods=[
+        "*",
+    ],
+
+    allow_headers=[
+        "*",
+    ],
 )
 
+
+app.include_router(
+    auth_router
+)
 
 app.include_router(
     api_router
@@ -88,13 +121,19 @@ app.include_router(
 )
 
 app.include_router(
+    audit_router
+)
+
+app.include_router(
     websocket_router
 )
 
 
 @app.get(
     "/",
-    tags=["System"],
+    tags=[
+        "System",
+    ],
 )
 def root():
     return {
@@ -107,14 +146,14 @@ def root():
         "version":
             "1.0.0",
 
+        "authentication":
+            "JWT",
+
         "api":
             "/api/v1",
 
         "websocket":
             "/ws/queue",
-
-        "forecasting":
-            "/api/v1/forecast/recalculate",
 
         "docs":
             "/docs",
@@ -123,7 +162,9 @@ def root():
 
 @app.get(
     "/health",
-    tags=["System"],
+    tags=[
+        "System",
+    ],
 )
 def health_check():
     db = SessionLocal()
@@ -145,6 +186,9 @@ def health_check():
             "api":
                 "online",
 
+            "authentication":
+                "jwt",
+
             "forecast_engine":
                 "monte-carlo",
 
@@ -160,19 +204,10 @@ def health_check():
             "database":
                 "error",
 
-            "api":
-                "online",
-
             "detail":
                 str(
                     error
                 ),
-
-            "forecast_engine":
-                "monte-carlo",
-
-            "websocket":
-                "online",
         }
 
     finally:

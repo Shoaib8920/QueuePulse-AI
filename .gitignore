@@ -1,7 +1,4 @@
-# ==============================
-# FRONTEND
-# ==============================
-
+# Frontend
 frontend/node_modules/
 frontend/dist/
 
@@ -10,11 +7,7 @@ frontend/.env.local
 frontend/.env.development.local
 frontend/.env.production.local
 
-
-# ==============================
-# BACKEND
-# ==============================
-
+# Backend
 backend/.venv/
 backend/venv/
 
@@ -26,14 +19,9 @@ backend/*.sqlite3
 backend/.env
 backend/.env.local
 
-
-# ==============================
-# PYTHON
-# ==============================
-
+# Python
 __pycache__/
 **/__pycache__/
-
 *.pyc
 *.pyo
 *.pyd
@@ -41,18 +29,10 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 
-
-# ==============================
 # IDE
-# ==============================
-
 .vscode/
 .idea/
 
-
-# ==============================
-# OPERATING SYSTEM
-# ==============================
-
+# OS
 .DS_Store
 Thumbs.db

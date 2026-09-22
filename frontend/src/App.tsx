@@ -4,22 +4,27 @@ import {
   Routes,
 } from "react-router-dom"
 
+import ProtectedRoute from "./components/ProtectedRoute"
+
 import DashboardLayout from "./layouts/DashboardLayout"
 
+import AuditLog from "./pages/AuditLog"
 import CommandCenter from "./pages/CommandCenter"
 import Doctors from "./pages/Doctors"
 import Forecasting from "./pages/Forecasting"
 import LiveQueue from "./pages/LiveQueue"
-import Patients from "./pages/Patients"
+import Login from "./pages/Login"
 import PatientToken from "./pages/PatientToken"
+import Patients from "./pages/Patients"
+
 
 export default function App() {
   return (
     <Routes>
 
-      {/* ========================================== */}
-      {/* PUBLIC PATIENT EXPERIENCE */}
-      {/* ========================================== */}
+      {/* ============================================== */}
+      {/* PUBLIC PATIENT ROUTE */}
+      {/* ============================================== */}
 
       <Route
         path="/token/:reference"
@@ -28,66 +33,115 @@ export default function App() {
         }
       />
 
-      {/* ========================================== */}
-      {/* STAFF DASHBOARD */}
-      {/* ========================================== */}
+
+      {/* ============================================== */}
+      {/* STAFF LOGIN */}
+      {/* ============================================== */}
+
+      <Route
+        path="/login"
+        element={
+          <Login />
+        }
+      />
+
+
+      {/* ============================================== */}
+      {/* AUTHENTICATED STAFF APPLICATION */}
+      {/* ============================================== */}
 
       <Route
         element={
-          <DashboardLayout />
+          <ProtectedRoute />
         }
       >
 
         <Route
-          index
           element={
-            <Navigate
-              to="/command-center"
-              replace
-            />
+            <DashboardLayout />
           }
-        />
+        >
 
-        <Route
-          path="/command-center"
-          element={
-            <CommandCenter />
-          }
-        />
+          {/* DEFAULT AUTHENTICATED ROUTE */}
 
-        <Route
-          path="/live-queue"
-          element={
-            <LiveQueue />
-          }
-        />
+          <Route
+            index
+            element={
+              <Navigate
+                to="/command-center"
+                replace
+              />
+            }
+          />
 
-        <Route
-          path="/patients"
-          element={
-            <Patients />
-          }
-        />
 
-        <Route
-          path="/doctors"
-          element={
-            <Doctors />
-          }
-        />
+          {/* COMMAND CENTER */}
 
-        <Route
-          path="/forecasting"
-          element={
-            <Forecasting />
-          }
-        />
+          <Route
+            path="/command-center"
+            element={
+              <CommandCenter />
+            }
+          />
+
+
+          {/* LIVE QUEUE */}
+
+          <Route
+            path="/live-queue"
+            element={
+              <LiveQueue />
+            }
+          />
+
+
+          {/* PATIENT MANAGEMENT */}
+
+          <Route
+            path="/patients"
+            element={
+              <Patients />
+            }
+          />
+
+
+          {/* DOCTOR WORKFLOW */}
+
+          <Route
+            path="/doctors"
+            element={
+              <Doctors />
+            }
+          />
+
+
+          {/* FORECASTING */}
+
+          <Route
+            path="/forecasting"
+            element={
+              <Forecasting />
+            }
+          />
+
+
+          {/* AUDIT LOG */}
+
+          <Route
+            path="/audit"
+            element={
+              <AuditLog />
+            }
+          />
+
+        </Route>
 
       </Route>
 
-      {/* ========================================== */}
-      {/* FALLBACK */}
-      {/* ========================================== */}
+
+      {/* ============================================== */}
+      {/* UNKNOWN ROUTES */}
+      {/* ============================================== */}
 
       <Route
         path="*"
